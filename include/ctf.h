@@ -6,6 +6,7 @@ typedef struct {
     short y;
     short size;
     char color;
+    int hasFlag;
 } Player;
 //There are two global player instances, player1 and player2. You need to use these. call initCTF() at the beginning to initialize them
 
@@ -41,10 +42,20 @@ int playerInEndZone(Player* p); //retuns if player is in end zone -- left side f
 void readFlag(); // dev function
 Flag* initFlag(short x, short y, char color); // dev function
 void moveFlagTo(Flag* flag, short x, short y); //moves flag to (x, y)
+                                                // the only thing you need to do with this is reset the flag if hte player dies, the flag will automatically track the player once you set hasFlag
 int touchingFlag(Player* p1, Flag* f1); //returns 1 if player is touching flag, 0 otherwise
-void hideFlag(Flag* flag); //hide flag on the map (if player picks it up, call hasFlag and this)
-void showFlag(Flag* flag); //show flag (if player drops flag, call hasFlag and this)
 
 void showEnd(Player* p); //ends the game with Player p as victor. 
+
+
+/* 
+    I think general flow will be something like
+    initCTF()
+    move players based on inputs
+    If player touches enemy flag, set hasFlag for that player
+    IF player touches enemy player, reset whoever's on the enemies side, along with their flag
+    If a player reaches their endzone with enemy flag, call showEnd, pause everything
+    Reset to start new game
+*/
 
 #endif 

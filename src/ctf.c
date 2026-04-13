@@ -31,6 +31,7 @@ Player* initPlayer(short x, short y, short size, char color) {
     p1->x = x;
     p1->y = y;
     p1->size = size;
+    p1->hasFlag = 0;
     p1->color = color;
     for(int x = p1->x; x < p1->x+p1->size; x++) {
         for(int y = p1->y; y < p1->y+p1->size; y++) {
@@ -53,6 +54,11 @@ int moveRight(Player* player, short dist) {
             return 1;
         }
     }
+
+    if(player->hasFlag) {
+        moveFlagTo(player == player1 ? flag1 : flag2, newX + 20, player->y + 20);
+    }
+    
     for(int x = player->x; x < newX; x++) {
         for(int y = player->y; y < player->y+player->size; y++) {
             drawPixel(x, y, WHITE);
@@ -64,6 +70,8 @@ int moveRight(Player* player, short dist) {
         }
     }
     player->x = newX;
+    
+   
     return 0;
 }
 
@@ -81,6 +89,10 @@ void moveLeft(Player* player, short dist) {
         if(touchingPlayer(&test, player1)) {
             return 1;
         }
+    }
+
+    if(player->hasFlag) {
+        moveFlagTo(player == player1 ? flag1 : flag2, newX + 20, player->y + 20);
     }
 
     for(int x = newX; x < player->x; x++) {
@@ -112,6 +124,10 @@ void moveUp(Player* player, short dist) {
         }
     }
 
+    if(player->hasFlag) {
+        moveFlagTo(player == player1 ? flag1 : flag2, player->x + 20, newY + 20);
+    }
+
     for(int x = player->x; x < player->x + player->size; x++) {
         for(int y = player->y; y > newY; y--) {
             drawPixel(x, y, player->color);
@@ -139,6 +155,10 @@ void moveDown(Player* player, short dist) {
         if(touchingPlayer(&test, player1)) {
             return 1;
         }
+    }
+
+    if(player->hasFlag) {
+        moveFlagTo(player == player1 ? flag1 : flag2, player->x + 20, newY + 20);
     }
 
     for(int x = player->x; x < player->x + player->size; x++) {
@@ -220,6 +240,13 @@ int touchingPlayer(Player* p1, Player* p2) {
     (p1->y + p1->size >= p2->y);
 }
 
+int touchingFlag(Player* p1, Flag* f1) {
+    return (p1->x <= f1->x + 30) &&
+    (p1->x + p1->size >= f1->x) &&
+    (p1->y <= f1->y + 30) &&
+    (p1->y + p1->size >= f1->y);
+}
+
 int playerInEndZone(Player* p) {
     if (p == player1) {
         if(p->x < 100) {
@@ -234,4 +261,8 @@ int playerInEndZone(Player* p) {
         return 0;
     }
     return -1;
+}
+
+void hasFlag(Player* p1, int hasFlag) {
+    p1->hasFlag = hasFlag;
 }
