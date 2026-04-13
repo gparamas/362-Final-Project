@@ -28,6 +28,8 @@ enum vga_pins {HSYNC=27, VSYNC, RED_PIN, GREEN_PIN, BLUE_PIN} ;
 // We can only produce 8 (3-bit) colors, so let's give them readable names - usable in main()
 enum colors {BLACK, RED, GREEN, YELLOW, BLUE, MAGENTA, CYAN, WHITE} ;
 
+extern unsigned char vga_data_array[153600];
+
 // VGA primitives - usable in main
 void initVGA(void) ;
 void drawPixel(short x, short y, char color) ;

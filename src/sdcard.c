@@ -313,7 +313,7 @@ void mkdir(int argc, char *argv[])
     }
 }
 
-void mount(int argc, char *argv[])
+void mount()
 {
     FATFS *fs = &fs_storage;
     if (fs->id != 0) {
@@ -321,6 +321,18 @@ void mount(int argc, char *argv[])
         return;
     }
     int res = f_mount(fs, "", 1);
+    if (res != FR_OK)
+        print_error(res, "Error occurred while mounting");
+}
+
+void unmount()
+{
+    FATFS *fs = &fs_storage;
+    if (fs->id == 0) {
+        print_error(FR_DISK_ERR, "Already unmounted.");
+        return;
+    }
+    FRESULT res = f_unmount(fs);
     if (res != FR_OK)
         print_error(res, "Error occurred while mounting");
 }
@@ -391,3 +403,4 @@ void restart(int argc, char *argv[])
     sleep_ms(100); // wait for message to be sent
     watchdog_reboot(0, 0, 0);
 }
+

@@ -18,22 +18,64 @@ void uart_rx_handler();
 
 void init_uart() {
     // fill in.
+    
+    // fill in
+    gpio_set_function(0, UART_FUNCSEL_NUM(uart0, 0));
+    gpio_set_function(1, UART_FUNCSEL_NUM(uart0, 1));
+    uart_init(uart0, 115200);
+    //uart_set_format(uart0, 8, 1, UART_PARITY_NONE);
 }
 
 void init_uart_irq() {
     // fill in.
+    uart_set_fifo_enabled(uart0, false);
+    irq_set_exclusive_handler(UART_IRQ_NUM(uart0), uart_rx_handler);
+    uart0_hw->imsc = 1u << UART_UARTIMSC_RXIM_LSB;
+    irq_set_enabled(UART_IRQ_NUM(uart0), true);
 }
+
 
 void uart_rx_handler() {
     // fill in.
+    uart0_hw->icr = 1u << UART_UARTICR_RXIC_LSB;
+    if(seridx == BUFSIZE)
+        return;
+    char c = uart0_hw->dr;
+    if(c == 0x0A) {
+        newline_seen = 1;
+        uint8_t lf = 10;
+        uart_write_blocking(uart0, &lf, 1);
+        return;
+    }
+    if(c == 8) {
+        seridx -= seridx > 0 ? 1 : 0;
+        serbuf[seridx] = '\0';
+        uint8_t bs[3] = {8, 32, 8};
+        uart_write_blocking(uart0, bs, 3);
+        return;
+
+    }
+    serbuf[seridx] = c;
+    uart_write_blocking(uart0, &c, 1);
+    seridx++;
 }
 
 int _read(__unused int handle, char *buffer, int length) {
     // fill in.
+    while(!newline_seen)
+        sleep_ms(5);
+    newline_seen = 0;
+    for(int i = 0; i < ((length > seridx) ? seridx : length); i++) {
+        buffer[i] = serbuf[i];
+    }
+    seridx = 0;
+    return length;
 }
 
 int _write(__unused int handle, char *buffer, int length) {
     // fill in.
+    uart_write_blocking(uart0, buffer, length);
+    return length;
 }
 
 /*******************************************************************/

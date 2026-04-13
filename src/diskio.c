@@ -34,8 +34,9 @@ void spi_clear_rxfifo(spi_inst_t *s) {
 // reading the value from the SPI_DR and returning that value.
 uint8_t sdcard_write(uint8_t b)
 {
-    spi_write_blocking(sd, &b, 1);
-    return (uint8_t)spi_get_hw(sd)->dr;
+    uint8_t dst;
+    spi_write_read_blocking(sd, &b, &dst, 1);
+    return dst;
 }
 
 // uint8_t sdcard_read(void)
@@ -71,6 +72,7 @@ int sdcard_cmd(uint8_t cmd, uint32_t arg, int crc)
         value = sdcard_write(0xff);
         if (value != 0xff) break;
     }
+    //printf("num polling bytes for cmd %d: %d\n", cmd, count);
     return value;
 }
 
@@ -95,6 +97,7 @@ int sdcard_readblock(BYTE buffer[], int len)
         value = sdcard_write(0xff);
         if (value != 0xff) break;
     }
+    //printf("polling bytes for readblock: %d\n", count);
     if (value != 0xfe)
         return value;
     for(int i=0; i<len; i++)
@@ -102,6 +105,7 @@ int sdcard_readblock(BYTE buffer[], int len)
     uint8_t __attribute__((unused))crc1 = sdcard_write(0xff);
     uint8_t __attribute__((unused))crc2 = sdcard_write(0xff);
     uint8_t __attribute__((unused))check = sdcard_write(0xff); // Check that this is 0xff
+    //printf("CRC: 0x%02x 0x%02x\n", crc1, crc2);
     return 0xfe;
 }
 
@@ -210,7 +214,23 @@ DSTATUS disk_status (
     return disk_initialize(pdrv);
 }
 
+void csd(uint8_t* d) {
+    enable_sdcard();
+    sdcard_cmd(9, 0x00000000, 0xAF);
+    uint8_t a = 0xff;
+    while(a == 0xff) {
+        a = sdcard_write(0xff);
+    }
+    int i;
+    for(i = 0; i < 16; i++) {
+        d[i] = sdcard_write(0xff);
+    }
+    int crc1 = sdcard_write(0xff);
+    int crc2 = sdcard_write(0xff);
+    int check = sdcard_write(0xff);
+    disable_sdcard();
 
+}
 
 /*-----------------------------------------------------------------------*/
 /* Read Sector(s)                                                        */
@@ -229,24 +249,37 @@ DRESULT disk_read (
     if (disk_status(pdrv) == STA_NOINIT)
         return RES_NOTRDY;
     enable_sdcard();
+    //printf("count: %d", count);
     for(int c=0; c<count; c++) {
         BYTE *p = &buffer[512 * c];
+        //printf("writing to %p (offset %d)\n", p, 512 * c);
         value = sdcard_cmd(17, sector+c, 0x01);
+        //printf("CMD17 LBA=%lu R1=0x%02x\n", (unsigned long)(sector+c), value);
         if (value != 0) {
             status = RES_ERROR;
             break;
         }
         value = sdcard_readblock(p,512);
+        //printf("readblock result=0x%02x\n", value);
         if (value != 0xfe) {
             status = RES_ERROR;
             break;
         }
+
     }
     disable_sdcard();
     return status;
 }
 
-
+void test() {
+    uint8_t buffer[512];
+    enable_sdcard();
+    int r = sdcard_cmd(17, 41117, 0x01);
+    //printf("R1=0x%02x\n", r);
+    int result = sdcard_readblock(buffer, 512);
+    //printf("result=0x%02x\n", result);
+    disable_sdcard();
+}
 
 /*-----------------------------------------------------------------------*/
 /* Write Sector(s)                                                       */
