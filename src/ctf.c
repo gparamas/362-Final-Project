@@ -13,18 +13,17 @@
 char flagSprite[450];
 Player* player1;
 Player* player2;
+Flag* flag1;
+Flag* flag2;
 
 
-void setPlayer1(Player* p1) {
-    player1 = p1;
-}
-
-void setPlayer2(Player* p2) {
-    player2 = p2;
-}
-
-void initBackground() {
+void initCTF() {
     memset(vga_data_array, 0xFF, 153600 * sizeof(char));
+    readFlag();
+    player1 = initPlayer(50, 240, 50, BLUE);
+    player2 = initPlayer(200, 240, 50, GREEN);
+    flag1 = initFlag(50, 50, BLUE);
+    flag2 = initFlag(50, 50, GREEN);
 }
 
 Player* initPlayer(short x, short y, short size, char color) {
@@ -41,17 +40,17 @@ Player* initPlayer(short x, short y, short size, char color) {
     return p1;
 }
 
-void moveRight(Player* player, short dist) {
+int moveRight(Player* player, short dist) {
     short newX = player->x + dist + player->size > 640 ? 640 : player->x + dist;
     Player test = {newX, player->y, player->size, BLUE};
     if(player == player1) {
         if(touchingPlayer(&test, player2)) {
-            return;
+            return 1;
         }
     }
     else {
         if(touchingPlayer(&test, player1)) {
-            return;
+            return 1;
         }
     }
     for(int x = player->x; x < newX; x++) {
@@ -65,6 +64,7 @@ void moveRight(Player* player, short dist) {
         }
     }
     player->x = newX;
+    return 0;
 }
 
 
@@ -74,12 +74,12 @@ void moveLeft(Player* player, short dist) {
     Player test = {newX, player->y, player->size, BLUE};
     if(player == player1) {
         if(touchingPlayer(&test, player2)) {
-            return;
+            return 1;
         }
     }
     else {
         if(touchingPlayer(&test, player1)) {
-            return;
+            return 1;
         }
     }
 
@@ -94,6 +94,7 @@ void moveLeft(Player* player, short dist) {
         }
     }
     player->x = newX;
+    return 0;
 }
 
 void moveUp(Player* player, short dist) {
@@ -102,12 +103,12 @@ void moveUp(Player* player, short dist) {
     Player test = {player->x, newY, player->size, BLUE};
     if(player == player1) {
         if(touchingPlayer(&test, player2)) {
-            return;
+            return 1;
         }
     }
     else {
         if(touchingPlayer(&test, player1)) {
-            return;
+            return 1;
         }
     }
 
@@ -122,6 +123,7 @@ void moveUp(Player* player, short dist) {
         }
     }
     player->y = newY;
+    return 0;
 }
 
 void moveDown(Player* player, short dist) {
@@ -130,12 +132,12 @@ void moveDown(Player* player, short dist) {
     Player test = {player->x, newY, player->size, BLUE};
     if(player == player1) {
         if(touchingPlayer(&test, player2)) {
-            return;
+            return 1; 
         }
     }
     else {
         if(touchingPlayer(&test, player1)) {
-            return;
+            return 1;
         }
     }
 
@@ -150,6 +152,7 @@ void moveDown(Player* player, short dist) {
         }
     }
     player->y = newY;
+    return 0;
 }
 
 void moveTo(Player* player, short x, short y) {
@@ -179,15 +182,18 @@ void readFlag() {
     unmount();
 }
 
-Flag initFlag(short x, short y, char color) {
-    Flag flag = {.x = x, .y = y, .color = color};
+Flag* initFlag(short x, short y, char color) {
+    Flag* f1 = malloc(sizeof(Flag));
+    f1->x = x;
+    f1->y = y;
+    f1->color = color;
     for(int i = 0; i < 30; i++) {
         for(int j = 0; j < 15; j++) {
             drawPixel(x + j, y + i, (flagSprite[i * 15 + j] & 0b11110000) >> 4);
             drawPixel(x + 1 + j, y + i, (flagSprite[i * 15 + j] & 0b00001111));
         }
     }
-    return flag;
+    return f1;
 }
 
 void moveFlagTo(Flag* flag, short x, short y) {

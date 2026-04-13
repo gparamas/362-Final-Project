@@ -69,6 +69,8 @@ void command_shell();
 
 Player* player1;
 Player* player2; 
+Flag* flag1;
+Flag* flag2;
 
 
 int main(int argc, char** argv) {
@@ -87,10 +89,9 @@ int main(int argc, char** argv) {
     gpio_init(26);
 
     initBackground();
-    readFlag();
+    
 
-    setPlayer1(initPlayer(50, 240, 50, BLUE));
-    setPlayer2(initPlayer(200, 240, 50, GREEN));
+    
     Flag f1 = initFlag(100, 100, GREEN);
 
     for(;;) {
