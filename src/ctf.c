@@ -213,9 +213,25 @@ void moveFlagTo(Flag* flag, short x, short y) {
     flag->y = y;
 }
 
-    int touchingPlayer(Player* p1, Player* p2) {
-        return (p1->x <= p2->x + p2->size) &&
-        (p1->x + p1->size >= p2->x) &&
-        (p1->y <= p2->y + p2->size) &&
-        (p1->y + p1->size >= p2->y);
+int touchingPlayer(Player* p1, Player* p2) {
+    return (p1->x <= p2->x + p2->size) &&
+    (p1->x + p1->size >= p2->x) &&
+    (p1->y <= p2->y + p2->size) &&
+    (p1->y + p1->size >= p2->y);
+}
+
+int playerInEndZone(Player* p) {
+    if (p == player1) {
+        if(p->x < 100) {
+            return 1;
+        }
+        return 0;
     }
+    if (p == player2) {
+        if(p->x > 540) {
+            return 1;
+        }
+        return 0;
+    }
+    return -1;
+}

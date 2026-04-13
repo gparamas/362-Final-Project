@@ -35,6 +35,7 @@ void moveTo(Player* player, short x, short y); //moves player to location x, y (
                                                 //WILL MOVE EVEN IF COLLISION WILL HAPPEN, WHATEVER IS BEING COLLIDED WITH WILL DISAPPEAR
 int touchingPlayer(Player* p1, Player* p2); //developer function, dont use this. use values you get from move commands
 void hasFlag(Player* p1, int hasFlag); //if player picks up his flag, call this with hasflag = 1. If he loses flag, call with hasflag = 0.
+int playerInEndZone(Player* p); //retuns if player is in end zone -- left side for player1, right side for player2
 
 
 void readFlag(); // dev function
@@ -43,5 +44,7 @@ void moveFlagTo(Flag* flag, short x, short y); //moves flag to (x, y)
 int touchingFlag(Player* p1, Flag* f1); //returns 1 if player is touching flag, 0 otherwise
 void hideFlag(Flag* flag); //hide flag on the map (if player picks it up, call hasFlag and this)
 void showFlag(Flag* flag); //show flag (if player drops flag, call hasFlag and this)
+
+void showEnd(Player* p); //ends the game with Player p as victor. 
 
 #endif 
