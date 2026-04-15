@@ -1,21 +1,32 @@
 #ifndef CTF_H
 #define CTF_H
 
+
+typedef enum {
+    TOUCHED, WITH, ALONE
+} FLAG_STATE;
+
+typedef struct {
+    short x;
+    short y;
+    char color;
+    FLAG_STATE state;
+} Flag;
+
 typedef struct {
     short x;
     short y;
     short size;
     char color;
     int hasFlag;
+    Flag* flag;
 } Player;
 //There are two global player instances, player1 and player2. You need to use these. call initCTF() at the beginning to initialize them
 
-typedef struct {
-    short x;
-    short y;
-    char color;
-} Flag;
+
+
 //There are two global flag instances, flag1 and flag2. You need to use these. Call initCTF() at the beginning to initialize them
+
 
 extern char flagSprite[450];
 extern Player* player1;
@@ -46,7 +57,9 @@ void moveFlagTo(Flag* flag, short x, short y); //moves flag to (x, y)
 int touchingFlag(Player* p1, Flag* f1); //returns 1 if player is touching flag, 0 otherwise
 
 void showEnd(Player* p); //ends the game with Player p as victor. 
-
+void readMap(char* buf, char* filename);
+void dispMap(char* buff);
+void clearMap();
 
 /* 
     I think general flow will be something like

@@ -83,17 +83,25 @@ int main(int argc, char** argv) {
 
     //command_shell();
 
-
+    mount();
     
     gpio_init(21);
     gpio_init(26);
 
-    initBackground();
+    //initBackground();
     
-
+    initCTF();
+    char buf[768];
+    readMap(buf, "map1.vga");
+    for(int i = 0; i < 32; i++) {
+        for(int j = 0; j < 24; j++) {
+            printf("%d ", buf[i * 24 + j]);
+        }
+        printf("\n");
+    }
+    dispMap(buf);
     
-    Flag f1 = initFlag(100, 100, GREEN);
-
+    unmount();
     for(;;) {
         if(gpio_get(21)) {
             moveRight(player1, 5);
@@ -103,8 +111,10 @@ int main(int argc, char** argv) {
             moveLeft(player1, 5);
             sleep_ms(50);
         }
-        if(touchingPlayer(player1, player2)) {
-            printf("touching");
+        if(touchingFlag(player1, flag2) && !player1->hasFlag) {
+           // printf("a");
+            hasFlag(player1, 1);
+            showEnd(player1);
         }
     }
 }

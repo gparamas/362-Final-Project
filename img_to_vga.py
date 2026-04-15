@@ -44,8 +44,18 @@ def flag():
         r2, g2, b2, c1 = data[i+1]
         a = (((r1 > 127) & 0x01) | (((g1 > 127) & 0x01) << 1) | (((b1 > 127) & 0x01) << 2) | (((r2 > 127) & 0x01) << 3) | (((g2 > 127) & 0x01) << 4) | (((b2 > 127) & 0x01) << 5)) & 63
         arr.append(a)
+    print(np.vectorize(hex)(arr))
+    
     arr = np.array(arr, dtype=np.uint8)
-    arr.tofile("flag.vga")
+    print(np.vectorize(hex)(arr))
+    #arr.tofile("flag.vga")
     
 
+def map():
+    arr = np.zeros((32, 24), dtype=np.uint8)
+    arr[16:17, :] = 1
+    arr.tofile("map1.vga")
+
+
+map()
 flag()
