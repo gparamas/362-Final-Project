@@ -1,6 +1,11 @@
 #include "usb.h"
 #include "tusb.h"
 #include <stdio.h>
+#include "pico/time.h"
+
+uint32_t tusb_time_millis_api(void) {
+    return to_ms_since_boot(get_absolute_time());
+}
 
 KeyboardState kb_p1 = {0};
 KeyboardState kb_p2 = {0};
