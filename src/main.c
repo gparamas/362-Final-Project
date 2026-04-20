@@ -7,6 +7,7 @@
 #include "hardware/pio.h"
 #include "hardware/gpio.h"
 #include "hardware/dma.h"
+#include "hardware/irq.h"
 #include "tusb.h"
 #include "ff.h"
 #include "diskio.h"
@@ -55,6 +56,8 @@ static void handle_flag_pickup(void);
 static int  handle_capture(int *score1, int *score2);
 static void reset_after_capture(void);
 
+static bool s_usb_stack_ok;
+
 /*=== SD glue (same as original) ===*/
 
 void init_spi_sdcard(void) {
@@ -88,16 +91,20 @@ void init_sdcard_io(void) {
     disable_sdcard();
 }
 
-/*=== on-screen debug helper ===*/
+/*=== USB status line (VGA — works without serial monitor) ===*/
 
-static void vga_debug(const char *msg) {
-    static int debug_y = 420;
+static void draw_usb_status_line(int poll_count) {
+    char buf[56];
+    fillRect(0, 458, 640, 22, BLACK);
     setTextColor2(WHITE, BLACK);
     setTextSize(1);
-    setCursor(5, debug_y);
-    writeString((char *)msg);
-    debug_y += 10;
-    if (debug_y > 470) debug_y = 420;
+    setCursor(4, 462);
+    sprintf(buf, "USB:%s bus:%s HID:%s poll:%d",
+            s_usb_stack_ok ? "OK" : "NO",
+            g_usb_device_mounted ? "Y" : "n",
+            g_usb_hid_ready ? "Y" : "n",
+            poll_count);
+    writeString(buf);
 }
 
 /*=== title screen ===*/
@@ -159,10 +166,8 @@ static void wait_for_keypress(void) {
     while (!any_key_pressed()) {
         tuh_task();
         poll_count++;
-        if (poll_count % 200 == 0) {
-            char dbg[40];
-            sprintf(dbg, "polling... %d", poll_count);
-            vga_debug(dbg);
+        if ((poll_count % 10) == 1) {
+            draw_usb_status_line(poll_count);
         }
         sleep_ms(10);
     }
@@ -268,16 +273,23 @@ int main(void) {
      * interrupt-driven, then events are handled in tuh_task().
      */
     stdio_init_all();
-    bool usb_ok = tusb_init();
-    if (!usb_ok) {
-        printf("FATAL: tusb_init() returned false (host stack did not start)\n");
+
+    tusb_rhport_init_t const host_init = {
+        .role  = TUSB_ROLE_HOST,
+        .speed = TUSB_SPEED_AUTO,
+    };
+    s_usb_stack_ok = tusb_rhport_init(0, &host_init);
+    if (!s_usb_stack_ok) {
+        printf("FATAL: tusb_rhport_init() failed\n");
+    } else {
+        irq_set_priority(USBCTRL_IRQ, 0);
     }
 
     initVGA();
     dma_channel_claim(0);
     dma_channel_claim(1);
 
-    if (!usb_ok) {
+    if (!s_usb_stack_ok) {
         setTextColor2(RED, BLACK);
         setTextSize(2);
         setCursor(40, 400);
@@ -303,7 +315,6 @@ int main(void) {
         /* ---------- TITLE ---------- */
         case STATE_TITLE: {
             draw_title();
-            vga_debug("Waiting for USB keyboard...");
             wait_for_release_then_press();
             state = STATE_PLAYING;
             break;
