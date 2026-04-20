@@ -48,6 +48,7 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
 
 void tuh_hid_mount_cb(uint8_t dev_addr, uint8_t instance,
                       uint8_t const* desc_report, uint16_t desc_len) {
+    printf("[usb] HID device mounted: addr=%d instance=%d\n", dev_addr, instance);
     tuh_hid_receive_report(dev_addr, instance);
 }
 

@@ -256,21 +256,14 @@ int main(void) {
     usb_init();
     audio_init();
 
-    /* --- load assets from SD card --- */
-    mount();
-    readFlag();
-    readMap(game_map, "map1.vga");
-    unmount();
+    /* --- SD card map loading disabled for now --- */
+    // mount();
+    // readFlag();
+    // readMap(game_map, "map1.vga");
+    // unmount();
 
-    /* If map came back all-zero and no SD, use a built-in fallback */
-    int map_empty = 1;
-    for (int i = 0; i < MAP_COLS * MAP_ROWS; i++) {
-        if (game_map[i] != 0) { map_empty = 0; break; }
-    }
-    if (map_empty) {
-        printf("No map loaded from SD — using default map\n");
-        loadDefaultMap();
-    }
+    printf("Using default map (SD loading disabled)\n");
+    loadDefaultMap();
 
     /* --- game loop --- */
     GameState state = STATE_TITLE;
