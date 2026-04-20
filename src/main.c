@@ -16,6 +16,7 @@
 #include "vga_graphics.h"
 #include "ctf.h"
 #include "usb.h"
+#include "audio_machine.h"
 
 #include "hardware/spi.h"
 #include "ff.h"
@@ -103,6 +104,7 @@ static void tag_player(Player* victim) {
     }
     if (victim == player1) moveTo(victim, P1_SPAWN_X, P1_SPAWN_Y);
     else                   moveTo(victim, P2_SPAWN_X, P2_SPAWN_Y);
+    play_snare();  // tagged!
 }
 
 int main(void) {
@@ -123,6 +125,11 @@ int main(void) {
 
     initCTF();
     printf("[main] CTF ready\n");
+
+    audio_machine_init();
+    printf("[main] audio ready\n");
+
+    play_kick();  // boot chime / game-start
 
     absolute_time_t next_frame = make_timeout_time_ms(FRAME_MS);
 
@@ -148,8 +155,14 @@ int main(void) {
         if (p2.right) moveRight(player2, PLAYER_SPEED);
 
         // Flag pickup: grab the opposing color flag on contact.
-        if (!player1->hasFlag && touchingFlag(player1, flag2)) hasFlag(player1, 1);
-        if (!player2->hasFlag && touchingFlag(player2, flag1)) hasFlag(player2, 1);
+        if (!player1->hasFlag && touchingFlag(player1, flag2)) {
+            hasFlag(player1, 1);
+            play_hat();
+        }
+        if (!player2->hasFlag && touchingFlag(player2, flag1)) {
+            hasFlag(player2, 1);
+            play_hat();
+        }
 
         // Tagging: if two players collide and one is on their own side,
         // the home-side player tags the intruder.
@@ -160,8 +173,10 @@ int main(void) {
 
         // Win condition: bring the enemy flag back to your own end zone.
         if (player1->hasFlag && playerInEndZone(player1)) {
-            showEnd(player1);   // blocks forever — game over
+            play_sad_sample();
+            showEnd(player1);   // blocks forever - game over
         } else if (player2->hasFlag && playerInEndZone(player2)) {
+            play_sad_sample();
             showEnd(player2);
         }
     }
