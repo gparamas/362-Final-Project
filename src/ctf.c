@@ -204,12 +204,14 @@ void moveTo(Player* player, short x, short y) {
 }
 
 void readFlag() {
+    mount();
     FIL fptr;
     UINT read;
     FRESULT fo = f_open(&fptr, "flag.vga", FA_READ);
     FRESULT fr = f_read(&fptr, flagSprite, 450, &read);
     FRESULT fc = f_close(&fptr);
     printf("%d, %d, %d, %d\n", fo, fr, read, fc);
+    unmount();
 }
 
 Flag* initFlag(short x, short y, char color) {

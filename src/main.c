@@ -17,6 +17,11 @@
 #include "ctf.h"
 #include "usb.h"
 
+#include "hardware/spi.h"
+#include "ff.h"
+#include "diskio.h"
+#include "sdcard.h"
+
 #define PLAYER_SPEED  3
 #define FRAME_MS      25    // ~40 FPS game update
 
@@ -31,11 +36,59 @@
 #define FLAG2_SPAWN_X 200
 #define FLAG2_SPAWN_Y 240
 
+
+#define SD_MISO 16
+#define SD_CS 17
+#define SD_SCK 18
+#define SD_MOSI 19
+
+
 // ctf.c reads this from SD; we pre-fill it so the flag sprite is visible
 // even when no SD card is present. Each byte packs two pixels (high nibble,
 // low nibble); 0x55 paints MAGENTA everywhere, which shows up on both
 // the white field and the red end zones.
 extern char flagSprite[450];
+
+void init_spi_sdcard() {
+    gpio_set_function(SD_MISO, GPIO_FUNC_SPI);
+    gpio_set_function(SD_SCK, GPIO_FUNC_SPI);
+    gpio_set_function(SD_MOSI, GPIO_FUNC_SPI);
+    gpio_init(SD_CS);
+    gpio_set_dir(SD_CS, true);
+
+    spi_init(spi0, 400000);
+    gpio_put(SD_CS, 1);
+}
+
+void disable_sdcard() {
+    // fill in.
+    
+    //uint8_t end = 0xFF;
+    //uint8_t received = sdcard_write(0xFF);
+    ///printf("disable received: 0x%02x\n", received);
+    gpio_put(SD_CS, 1);
+    gpio_set_function(SD_MOSI, GPIO_FUNC_SIO);
+    gpio_set_dir(SD_MOSI, 1);
+    gpio_put(SD_MOSI, 1);
+}
+
+void enable_sdcard() {
+    // fill in.
+    gpio_set_function(SD_MOSI, GPIO_FUNC_SPI);
+    gpio_put(SD_CS, 0);
+}
+
+void sdcard_io_high_speed() {
+    // fill in.
+    spi_set_baudrate(spi0, 12000000);
+}
+
+void init_sdcard_io() {
+    // fill in.
+    init_spi_sdcard();
+    disable_sdcard();
+}
+
 
 static void return_flag_to_spawn(Flag* f, short sx, short sy) {
     f->state = ALONE;
