@@ -262,16 +262,27 @@ static void reset_after_capture(void) {
 
 int main(void) {
     /*
-     * Init order modeled after Ammar's working standalone USB code:
-     * stdio_init_all() then tusb_init() immediately.
-     * VGA and other peripherals come after.
+     * USB host: TinyUSB resets the RP2040 USB block in hcd_init(), muxes the
+     * PHY to the onboard USB pins, installs USBCTRL_IRQ, and enables host mode.
+     * tuh_task() must run often; connect/disconnect and transfers are mostly
+     * interrupt-driven, then events are handled in tuh_task().
      */
     stdio_init_all();
-    tusb_init();
+    bool usb_ok = tusb_init();
+    if (!usb_ok) {
+        printf("FATAL: tusb_init() returned false (host stack did not start)\n");
+    }
 
     initVGA();
     dma_channel_claim(0);
     dma_channel_claim(1);
+
+    if (!usb_ok) {
+        setTextColor2(RED, BLACK);
+        setTextSize(2);
+        setCursor(40, 400);
+        writeString("USB INIT FAILED");
+    }
 
     init_uart();
     init_uart_irq();
