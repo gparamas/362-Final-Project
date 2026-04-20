@@ -1,7 +1,11 @@
 #ifndef AUDIO_MACHINE_H
 #define AUDIO_MACHINE_H
 
-void audio_machine(void);  // full keypad-driven mode
+// Single-core audio engine. Output is PWM on GPIO 36; the ISR mixes up to
+// four one-shot voices at the sample rate. Call audio_machine_init() once,
+// then call any of the play_* functions to (re)trigger a sample.
+
+void audio_machine_init(void);
 
 void play_kick(void);
 void play_snare(void);
