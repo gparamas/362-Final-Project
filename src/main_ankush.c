@@ -23,9 +23,14 @@ void keypad_init_timer();
 void init_wavetable(void);
 void set_freq(int chan, float f);
 extern KeyEvents kev;
-void drum_machine(void);
+void audio_machine(void);
+void audio_machine_init(void);
+void play_kick(void);
+void play_snare(void);
+void play_hat(void);
+void play_sad_sample(void);
 
- #define DRUM_MACHINE
+ #define AUDIO_MACHINE
 
 //////////////////////////////////////////////////////////////////////////////
 void init_pwm_static(uint32_t period, uint32_t duty_cycle) {
@@ -161,9 +166,17 @@ int main()
     // communicate over UART through the TX/RX pins
     stdio_init_all();
 
-    #ifdef DRUM_MACHINE
-        drum_machine();
-        // drummer_machine();
+    #ifdef AUDIO_MACHINE
+        // audio_machine();
+        drum_machine_init();
+        play_kick();
+        sleep_ms(500);
+        play_snare();
+        sleep_ms(500);
+        play_hat();
+        sleep_ms(500);
+        play_sad_sample();
+        sleep_ms(500);
     #endif
 
     while (true) {

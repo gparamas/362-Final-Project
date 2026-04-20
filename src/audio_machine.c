@@ -80,8 +80,8 @@ static void dma_isr(void);
 static void fill_buf(uint16_t *dst, uint32_t n)
 {
     for (uint32_t i = 0; i < n; i++) {
-        int32_t mix   = 0;
-        int     count = 0;
+        int32_t mix = 0;
+        int count = 0;
  
         for (int v = 0; v < 4; v++) {
             voice_t *vo = &voices[v];
@@ -98,11 +98,11 @@ static void fill_buf(uint16_t *dst, uint32_t n)
         }
  
         if (count > 1)   mix /= count;
-        if (mix >  32767) mix =  32767;
+        if (mix >  32767) mix = 32767;
         if (mix < -32768) mix = -32768;
  
         // Signed PCM → unsigned → scale to PWM range [0, pwm_period)
-        uint32_t u     = (uint32_t)(mix + 32768);          // 0..65535
+        uint32_t u = (uint32_t)(mix + 32768);          // 0..65535
         uint32_t level = (u * pwm_period) >> 16;
         if (level >= pwm_period) level = pwm_period - 1;
         dst[i] = (uint16_t)level;
@@ -120,8 +120,8 @@ static void init_audio(void)
  
     // Derive TOP directly from system clock so math is always correct
     uint32_t sys_hz = clock_get_hz(clk_sys);
-    uint32_t top    = (sys_hz / RATE) - 1u;
-    pwm_top    = (uint16_t)top;
+    uint32_t top = (sys_hz / RATE) - 1u;
+    pwm_top = (uint16_t)top;
     pwm_period = (uint32_t)top + 1u;
  
     printf("[audio] sys_hz=%lu RATE=%u top=%lu period=%lu\n",
@@ -149,9 +149,7 @@ static void init_audio(void)
     irq_set_exclusive_handler(DMA_IRQ_0, dma_isr);
     irq_set_enabled(DMA_IRQ_0, true);
  
-    dma_channel_configure(dma_ch, &cfg,
-                          (void *)dma_dst, bufA, BUF_SAMPLES,
-                          false /* don't start yet */);
+    dma_channel_configure(dma_ch, &cfg, (void *)dma_dst, bufA, BUF_SAMPLES, false /* don't start yet */);
 }
  
 // ---------------------------------------------------------------------------
@@ -209,9 +207,7 @@ static void core1_worker(void)
                 if (buf_ready[b]) {
                     buf_ready[b] = false;
                     playing      = (bool)b;
-                    dma_channel_set_read_addr(dma_ch,
-                                             b ? (void *)bufB : (void *)bufA,
-                                             true);
+                    dma_channel_set_read_addr(dma_ch, b ? (void *)bufB : (void *)bufA, true);
                     break;
                 }
             }
@@ -238,59 +234,74 @@ static void trigger_voice(int idx) {
         kick_pcm_len, snare_pcm_len, hat_pcm_len, sad_sample_pcm_len
     };
     voice_t *v = &voices[idx];
-    v->pcm    = flash_pcm[idx];
+    v->pcm = flash_pcm[idx];
     v->frames = flash_frames[idx];
-    v->pos    = 0;
+    v->pos = 0;
     __dmb();
     v->active = true;
     printf("[trig] voice %d: %lu frames\n", idx, (unsigned long)v->frames);
 }
  
 // ---------------------------------------------------------------------------
-// drum_machine – public entry point called from main.c
+// audio_machine – public entry point called from main.c
 // ---------------------------------------------------------------------------
-void drum_machine(void)
-{
-    // Populate asset table at runtime (len values are extern variables, not constants)
-    keypad_init_pins();
-    keypad_init_timer();
-    display_init_pins();
-    display_init_timer();
+// void audio_machine(void) {
+//     // Populate asset table at runtime (len values are extern variables, not constants)
+//     keypad_init_pins();
+//     keypad_init_timer();
+//     display_init_pins();
+//     display_init_timer();
  
-    init_audio();
+//     init_audio();
  
-    printf("[dm] Launching core1...\n");
-    multicore_launch_core1(core1_worker);
-    multicore_fifo_pop_blocking();   // wait for core1 ready
-    printf("[dm] Core1 ready. pwm_period=%lu\n", (unsigned long)pwm_period);
+//     printf("[dm] Launching core1...\n");
+//     multicore_launch_core1(core1_worker);
+//     multicore_fifo_pop_blocking();   // wait for core1 ready
+//     printf("[dm] Core1 ready. pwm_period=%lu\n", (unsigned long)pwm_period);
  
     
  
-    // Start DMA on buffer A (core1 already filled it with silence)
+//     // Start DMA on buffer A (core1 already filled it with silence)
+//     buf_ready[0] = false;
+//     playing = false;
+//     dma_channel_set_read_addr(dma_ch, bufA, true /* trigger */);
+//     printf("[dm] DMA started. Ready — press A / B / C / D.\n");
+ 
+//     // Core0 main loop: consume keypad events
+//     while (true) {
+//         uint16_t evt = key_pop();
+//         bool pressed = (evt >> 8) & 1u;
+//         char k = (char)(evt & 0xFF);
+ 
+//         if (pressed) {
+//             // Show key on 7-segment display
+//             char disp[9] = "        ";
+//             disp[0] = k;
+//             display_char_print(disp);
+ 
+//             switch (k) {
+//                 case 'A': trigger_voice(0); break;
+//                 case 'B': trigger_voice(1); break;
+//                 case 'C': trigger_voice(2); break;
+//                 case 'D': trigger_voice(3); break;
+//                 default:  break;
+//             }
+//         }
+//     }
+// }
+
+void audio_machine_init(void) {
+    display_init_pins();
+    display_init_timer();
+    init_audio();
+    multicore_launch_core1(core1_worker);
+    multicore_fifo_pop_blocking();
     buf_ready[0] = false;
     playing      = false;
-    dma_channel_set_read_addr(dma_ch, bufA, true /* trigger */);
-    printf("[dm] DMA started. Ready — press A / B / C / D.\n");
- 
-    // Core0 main loop: consume keypad events
-    while (true) {
-        uint16_t evt     = key_pop();
-        bool     pressed = (evt >> 8) & 1u;
-        char     k       = (char)(evt & 0xFF);
- 
-        if (pressed) {
-            // Show key on 7-segment display
-            char disp[9] = "        ";
-            disp[0] = k;
-            display_char_print(disp);
- 
-            switch (k) {
-                case 'A': trigger_voice(0); break;
-                case 'B': trigger_voice(1); break;
-                case 'C': trigger_voice(2); break;
-                case 'D': trigger_voice(3); break;
-                default:  break;
-            }
-        }
-    }
+    dma_channel_set_read_addr(dma_ch, bufA, true);
 }
+
+void play_kick(void)   { trigger_voice(0); }
+void play_snare(void)  { trigger_voice(1); }
+void play_hat(void)    { trigger_voice(2); }
+void play_sad_sample(void) { trigger_voice(3); }
