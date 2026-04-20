@@ -58,4 +58,3 @@ def map():
 
 
 map()
-flag()
