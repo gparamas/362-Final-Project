@@ -159,30 +159,30 @@ void pwm_audio_handler() {
 
 
 
-int main()
-{
-    // Configures our microcontroller to 
-    // communicate over UART through the TX/RX pins
-    stdio_init_all();
+// int main()
+// {
+//     // Configures our microcontroller to 
+//     // communicate over UART through the TX/RX pins
+//     stdio_init_all();
 
-    #ifdef AUDIO_MACHINE
-        // audio_machine();
-        audio_machine_init();
-        // play_kick();
-        // sleep_ms(500);
-        // play_snare();
-        // sleep_ms(500);
-        // play_hat();
-        // sleep_ms(500);
-        play_sad_sample();
-        sleep_ms(500);
-    #endif
+//     #ifdef AUDIO_MACHINE
+//         // audio_machine();
+//         audio_machine_init();
+//         // play_kick();
+//         // sleep_ms(500);
+//         // play_snare();
+//         // sleep_ms(500);
+//         // play_hat();
+//         // sleep_ms(500);
+//         play_sad_sample();
+//         sleep_ms(500);
+//     #endif
 
-    while (true) {
-        printf("Hello, world!\n");
-        sleep_ms(1000);
-    }
+//     while (true) {
+//         printf("Hello, world!\n");
+//         sleep_ms(1000);
+//     }
 
-    for(;;);
-    return 0;
-}
+//     for(;;);
+//     return 0;
+// }
