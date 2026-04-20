@@ -204,12 +204,12 @@ void moveTo(Player* player, short x, short y) {
 }
 
 void readFlag() {
-    // SD-free default: clear the sprite buffer. initFlag/moveFlagTo draw
-    // the flag as a solid colored rectangle instead of decoding this buffer,
-    // so we never need to read flag.vga off an SD card.
-    for (int i = 0; i < 450; i++) {
-        flagSprite[i] = 0;
-    }
+    FIL fptr;
+    UINT read;
+    FRESULT fo = f_open(&fptr, "flag.vga", FA_READ);
+    FRESULT fr = f_read(&fptr, flagSprite, 450, &read);
+    FRESULT fc = f_close(&fptr);
+    printf("%d, %d, %d, %d\n", fo, fr, read, fc);
 }
 
 Flag* initFlag(short x, short y, char color) {
@@ -217,23 +217,39 @@ Flag* initFlag(short x, short y, char color) {
     f1->x = x;
     f1->y = y;
     f1->color = color;
-    f1->state = ALONE;
-    fillRect(x, y, 16, 30, color);
+    for(int i = 0; i < 30; i++) {
+        for(int j = 0; j < 15; j++) {
+            drawPixel(x + j, y + i, (flagSprite[i * 15 + j] & 0b11110000) >> 4);
+            drawPixel(x + 1 + j, y + i, (flagSprite[i * 15 + j] & 0b00001111));
+        }
+    }
     return f1;
 }
 
 void moveFlagTo(Flag* flag, short x, short y) {
-    // Erase the flag at its old spot with whatever color should be there:
-    //   - the carrying player's color if the flag is stuck to the player
-    //   - white (the field) otherwise
-    char bg = WHITE;
-    if (flag == flag2 && flag->state == WITH) bg = player1->color;
-    else if (flag == flag1 && flag->state == WITH) bg = player2->color;
-    fillRect(flag->x, flag->y, 16, 30, bg);
+    for(int i = flag->y; i < flag->y + 30; i++) {
+        for(int j = flag->x; j < flag->x + 30; j++) {
+            if(flag == flag2 && flag->state == WITH) {
+                drawPixel(j, i, player1->color);
+            }
+            else if(flag == flag1 && flag->state == WITH) {
+                drawPixel(j, i, player2->color);
+            }
+            else {
+                drawPixel(j, i, WHITE);
+            }
+        }
+    }
+    if(flag->state == TOUCHED) {
+        flag->state = WITH;
+    }
 
-    if (flag->state == TOUCHED) flag->state = WITH;
-
-    fillRect(x, y, 16, 30, flag->color);
+    for(int i = 0; i < 30; i++) {
+        for(int j = 0; j < 15; j++) {
+            drawPixel(x + j, y + i, (flagSprite[i * 15 + j] & 0b11110000) >> 4);
+            drawPixel(x + 1 + j, y + i, (flagSprite[i * 15 + j] & 0b00001111));
+        }
+    }
     flag->x = x;
     flag->y = y;
 }
@@ -276,10 +292,11 @@ void hasFlag(Player* p1, int hasFlag) {
 void showEnd(Player* p) {
     setCursor(100, 200);
     setTextSize(5);
-    setTextColor2(BLACK, WHITE);
-    char* s = (p == player1) ? "Player 1 Wins!" : "Player 2 Wins!";
+    char* s = p == player1 ? "Player 1 Wins!" : "Player 2 Wins!";
     writeString(s);
-    // Non-blocking: the caller decides what to do next (freeze, restart, etc.).
+    while(true) {
+        tight_loop_contents();
+    }
 }
 
 void readMap(char* buf, char* filename) {

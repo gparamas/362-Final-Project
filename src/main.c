@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "tusb.h"
 
@@ -19,15 +20,22 @@
 #define PLAYER_SPEED  3
 #define FRAME_MS      25    // ~40 FPS game update
 
-// Spawn coordinates for resets. Must match the positions used in initCTF().
+// initCTF() spawns players/flags at these positions (see ctf.c).
+// Re-declared here so the tag/reset helper can send them home.
 #define P1_SPAWN_X    50
 #define P1_SPAWN_Y    240
-#define P2_SPAWN_X    530
+#define P2_SPAWN_X    500
 #define P2_SPAWN_Y    240
 #define FLAG1_SPAWN_X 50
 #define FLAG1_SPAWN_Y 50
-#define FLAG2_SPAWN_X 574
-#define FLAG2_SPAWN_Y 50
+#define FLAG2_SPAWN_X 200
+#define FLAG2_SPAWN_Y 240
+
+// ctf.c reads this from SD; we pre-fill it so the flag sprite is visible
+// even when no SD card is present. Each byte packs two pixels (high nibble,
+// low nibble); 0x55 paints MAGENTA everywhere, which shows up on both
+// the white field and the red end zones.
+extern char flagSprite[450];
 
 static void return_flag_to_spawn(Flag* f, short sx, short sy) {
     f->state = ALONE;
@@ -35,7 +43,6 @@ static void return_flag_to_spawn(Flag* f, short sx, short sy) {
 }
 
 static void tag_player(Player* victim) {
-    // Drop the flag if the victim was carrying one, then teleport home.
     if (victim->hasFlag) {
         victim->hasFlag = 0;
         if (victim == player1) return_flag_to_spawn(flag2, FLAG2_SPAWN_X, FLAG2_SPAWN_Y);
@@ -56,23 +63,22 @@ int main(void) {
     tusb_init();
     printf("[main] TinyUSB host started\n");
 
+    // Pre-populate the flag sprite BEFORE initCTF runs. initCTF calls
+    // readFlag(), which tries to read flag.vga off the SD card. With no
+    // card the f_read fails silently and leaves our pattern in place.
+    memset(flagSprite, 0x55, 450);
+
     initCTF();
-    // Override flag2 to spawn on player 2's side of the field.
-    moveFlagTo(flag2, FLAG2_SPAWN_X, FLAG2_SPAWN_Y);
     printf("[main] CTF ready\n");
 
     absolute_time_t next_frame = make_timeout_time_ms(FRAME_MS);
-    bool game_over = false;
 
     while (1) {
-        // Service USB every loop iteration so host stack keeps up.
         tuh_task();
 
-        if (game_over) continue;
         if (!time_reached(next_frame)) continue;
         next_frame = make_timeout_time_ms(FRAME_MS);
 
-        // Snapshot shared input once per frame.
         KeyboardState p1 = kb_p1;
         KeyboardState p2 = kb_p2;
 
@@ -88,24 +94,22 @@ int main(void) {
         if (p2.left)  moveLeft (player2, PLAYER_SPEED);
         if (p2.right) moveRight(player2, PLAYER_SPEED);
 
-        // Flag pickup: each player grabs the opposing colour flag.
+        // Flag pickup: grab the opposing color flag on contact.
         if (!player1->hasFlag && touchingFlag(player1, flag2)) hasFlag(player1, 1);
         if (!player2->hasFlag && touchingFlag(player2, flag1)) hasFlag(player2, 1);
 
-        // Tagging: if the two players collide, whoever is on their own side
-        // tags the intruder.
+        // Tagging: if two players collide and one is on their own side,
+        // the home-side player tags the intruder.
         if (touchingPlayer(player1, player2)) {
             if      (playerInEndZone(player1)) tag_player(player2);
             else if (playerInEndZone(player2)) tag_player(player1);
         }
 
-        // Win: back to your own end zone carrying the enemy flag.
+        // Win condition: bring the enemy flag back to your own end zone.
         if (player1->hasFlag && playerInEndZone(player1)) {
-            showEnd(player1);
-            game_over = true;
+            showEnd(player1);   // blocks forever — game over
         } else if (player2->hasFlag && playerInEndZone(player2)) {
             showEnd(player2);
-            game_over = true;
         }
     }
 }
