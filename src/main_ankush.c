@@ -168,15 +168,17 @@ int main()
 
     #ifdef AUDIO_MACHINE
         // audio_machine();
-        drum_machine_init();
-        play_kick();
-        sleep_ms(500);
-        play_snare();
-        sleep_ms(500);
-        play_hat();
-        sleep_ms(500);
-        play_sad_sample();
-        sleep_ms(500);
+        audio_machine_init();
+        for(;;) {
+            play_kick();
+            sleep_ms(500);
+            play_snare();
+            sleep_ms(500);
+            play_hat();
+            sleep_ms(500);
+            play_sad_sample();
+            sleep_ms(500);
+        }
     #endif
 
     while (true) {
