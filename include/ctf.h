@@ -1,74 +1,82 @@
 #ifndef CTF_H
 #define CTF_H
 
+/*--- Spawn / layout constants (pixels) ---*/
+#define P1_SPAWN_X  50
+#define P1_SPAWN_Y  240
+#define P2_SPAWN_X  500
+#define P2_SPAWN_Y  240
+#define FLAG1_X     50
+#define FLAG1_Y     50
+#define FLAG2_X     580
+#define FLAG2_Y     50
+#define ENDZONE_PX  70      // left 0-69, right 570-639
+#define MIDLINE_PX  320
+#define PLAYER_SIZE 50
+#define MOVE_SPEED  5
 
-typedef enum {
-    TOUCHED, WITH, ALONE
-} FLAG_STATE;
+/*--- Map dimensions (tiles) ---*/
+#define MAP_COLS    32
+#define MAP_ROWS    24
+#define TILE_PX     20      // pixels per tile edge
+
+/*--- Types ---*/
+typedef enum { TOUCHED, WITH, ALONE } FLAG_STATE;
 
 typedef struct {
-    short x;
-    short y;
-    char color;
+    short x, y;
+    char  color;
     FLAG_STATE state;
 } Flag;
 
 typedef struct {
-    short x;
-    short y;
-    short size;
-    char color;
-    int hasFlag;
+    short x, y, size;
+    char  color;
+    int   hasFlag;
     Flag* flag;
 } Player;
-//There are two global player instances, player1 and player2. You need to use these. call initCTF() at the beginning to initialize them
 
-
-
-//There are two global flag instances, flag1 and flag2. You need to use these. Call initCTF() at the beginning to initialize them
-
-
-extern char flagSprite[450];
+/*--- Globals (defined in ctf.c) ---*/
+extern char    flagSprite[450];
 extern Player* player1;
 extern Player* player2;
-extern Flag* flag1;
-extern Flag* flag2;
+extern Flag*   flag1;
+extern Flag*   flag2;
+extern char    game_map[MAP_COLS * MAP_ROWS];
 
+/*--- Initialization ---*/
+void initCTF(void);
+void readFlag(void);
 
-void initCTF(); // call at the start to initialize background, player1, flag1, player2, flag2
+/*--- Player helpers ---*/
+Player* initPlayer(short x, short y, short size, char color);
+int  moveRight(Player* player, short dist);
+int  moveLeft(Player* player, short dist);
+int  moveUp(Player* player, short dist);
+int  moveDown(Player* player, short dist);
+void moveTo(Player* player, short x, short y);
+void resetPlayer(Player* p, short spawn_x, short spawn_y);
 
-Player* initPlayer(short x, short y, short size, char color); // dont worry about this
+/*--- Flag helpers ---*/
+Flag* initFlag(short x, short y, char color);
+void  moveFlagTo(Flag* flag, short x, short y);
+void  resetFlag(Flag* f, short orig_x, short orig_y);
+int   touchingFlag(Player* p1, Flag* f1);
+void  hasFlag(Player* p1, int hasFlag);
 
-int moveRight(Player* player, short dist); //moves player right by dist. Will not move if the movement will cause collision. if collision, returns 1, otherwise 0. same for other movement functions
-int moveLeft(Player* player, short dist); //moves player left by dist. Will not move if the movement will cause collision.
-int moveUp(Player* player, short dist); //moves player up by dist. Will not move if the movement will cause collision.
-int moveDown(Player* player, short dist); //moves player down by dist. Will not move if the movement will cause collision.
-void moveTo(Player* player, short x, short y); //moves player to location x, y (x ranges from 0 to 640 (left to right), y ranges from 0 to 480 (top to bottom)) 
-                                                //WILL MOVE EVEN IF COLLISION WILL HAPPEN, WHATEVER IS BEING COLLIDED WITH WILL DISAPPEAR
-int touchingPlayer(Player* p1, Player* p2); //developer function, dont use this. use values you get from move commands
-void hasFlag(Player* p1, int hasFlag); //if player picks up his flag, call this with hasflag = 1. If he loses flag, call with hasflag = 0.
-int playerInEndZone(Player* p); //retuns if player is in end zone -- left side for player1, right side for player2
+/*--- Collision / spatial queries ---*/
+int  touchingPlayer(Player* p1, Player* p2);
+int  playerInEndZone(Player* p);
+int  hits_wall(short x, short y, short size);
+char get_bg_color(short x, short y);
 
-
-void readFlag(); // dev function
-Flag* initFlag(short x, short y, char color); // dev function
-void moveFlagTo(Flag* flag, short x, short y); //moves flag to (x, y)
-                                                // the only thing you need to do with this is reset the flag if hte player dies, the flag will automatically track the player once you set hasFlag
-int touchingFlag(Player* p1, Flag* f1); //returns 1 if player is touching flag, 0 otherwise
-
-void showEnd(Player* p); //ends the game with Player p as victor. 
+/*--- Map ---*/
 void readMap(char* buf, char* filename);
-void dispMap(char* buff);
-void clearMap();
+void dispMap(char* buf);
+void clearMap(void);
+void loadDefaultMap(void);
 
-/* 
-    I think general flow will be something like
-    initCTF()
-    move players based on inputs
-    If player touches enemy flag, set hasFlag for that player
-    IF player touches enemy player, reset whoever's on the enemies side, along with their flag
-    If a player reaches their endzone with enemy flag, call showEnd, pause everything
-    Reset to start new game
-*/
+/*--- End screen (displays text, returns immediately) ---*/
+void showEnd(Player* p);
 
-#endif 
+#endif
