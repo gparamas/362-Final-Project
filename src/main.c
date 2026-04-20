@@ -88,6 +88,18 @@ void init_sdcard_io(void) {
     disable_sdcard();
 }
 
+/*=== on-screen debug helper ===*/
+
+static void vga_debug(const char *msg) {
+    static int debug_y = 420;
+    setTextColor2(WHITE, BLACK);
+    setTextSize(1);
+    setCursor(5, debug_y);
+    writeString((char *)msg);
+    debug_y += 10;
+    if (debug_y > 470) debug_y = 420;
+}
+
 /*=== title screen ===*/
 
 static void draw_title(void) {
@@ -147,18 +159,16 @@ static void wait_for_keypress(void) {
     while (!any_key_pressed()) {
         tuh_task();
         poll_count++;
-        if (poll_count % 100 == 0) {
-            printf("[poll] tuh_task called %d times, no key yet\n", poll_count);
+        if (poll_count % 200 == 0) {
+            char dbg[40];
+            sprintf(dbg, "polling... %d", poll_count);
+            vga_debug(dbg);
         }
         sleep_ms(10);
     }
-    printf("[key] pressed! P1: u=%d d=%d l=%d r=%d  P2: u=%d d=%d l=%d r=%d\n",
-           kb_p1.up, kb_p1.down, kb_p1.left, kb_p1.right,
-           kb_p2.up, kb_p2.down, kb_p2.left, kb_p2.right);
 }
 
 static void wait_for_release_then_press(void) {
-    /* wait for all keys released first */
     while (any_key_pressed()) { tuh_task(); sleep_ms(10); }
     wait_for_keypress();
 }
@@ -179,7 +189,6 @@ static void handle_tagging(int *score1, int *score2) {
     int p1_center = player1->x + player1->size / 2;
     int p2_center = player2->x + player2->size / 2;
 
-    /* P1 on enemy (right) side → P1 gets tagged */
     if (p1_center >= MIDLINE_PX) {
         audio_play_sfx(SFX_TAGGED);
         if (player1->hasFlag) {
@@ -189,7 +198,6 @@ static void handle_tagging(int *score1, int *score2) {
         resetPlayer(player1, P1_SPAWN_X, P1_SPAWN_Y);
     }
 
-    /* P2 on enemy (left) side → P2 gets tagged */
     if (p2_center < MIDLINE_PX) {
         audio_play_sfx(SFX_TAGGED);
         if (player2->hasFlag) {
@@ -201,19 +209,16 @@ static void handle_tagging(int *score1, int *score2) {
 }
 
 static void handle_flag_pickup(void) {
-    /* P1 touches flag2 (enemy flag) */
     if (!player1->hasFlag && touchingFlag(player1, flag2)) {
         hasFlag(player1, 1);
         audio_play_sfx(SFX_FLAG_PICKUP);
     }
-    /* P2 touches flag1 (enemy flag) */
     if (!player2->hasFlag && touchingFlag(player2, flag1)) {
         hasFlag(player2, 1);
         audio_play_sfx(SFX_FLAG_PICKUP);
     }
 }
 
-/* Returns 1 if a capture happened (pause + reset needed). */
 static int handle_capture(int *score1, int *score2) {
     if (player1->hasFlag && playerInEndZone(player1)) {
         (*score1)++;
@@ -256,27 +261,26 @@ static void reset_after_capture(void) {
 /*=== main ===*/
 
 int main(void) {
+    /*
+     * Init order modeled after Ammar's working standalone USB code:
+     * stdio_init_all() then tusb_init() immediately.
+     * VGA and other peripherals come after.
+     */
     stdio_init_all();
     tusb_init();
-    printf("[usb] tusb_init done\n");
+
     initVGA();
     dma_channel_claim(0);
     dma_channel_claim(1);
+
     init_uart();
     init_uart_irq();
     init_sdcard_io();
-    audio_init();
 
-    /* --- SD card map loading disabled for now --- */
-    // mount();
-    // readFlag();
-    // readMap(game_map, "map1.vga");
-    // unmount();
+    /* Audio disabled for debugging USB — re-enable once keyboard works */
+    // audio_init();
 
-    printf("Using default map (SD loading disabled)\n");
     loadDefaultMap();
-
-    printf("[init] All modules initialized. Entering game loop.\n");
 
     /* --- game loop --- */
     GameState state = STATE_TITLE;
@@ -287,10 +291,9 @@ int main(void) {
 
         /* ---------- TITLE ---------- */
         case STATE_TITLE: {
-            audio_play_music(MUSIC_MENU);
             draw_title();
+            vga_debug("Waiting for USB keyboard...");
             wait_for_release_then_press();
-            audio_stop_music();
             state = STATE_PLAYING;
             break;
         }
@@ -302,9 +305,6 @@ int main(void) {
 
             initCTF();
             dispMap(game_map);
-
-            audio_play_music(MUSIC_GAMEPLAY);
-            audio_play_sfx(SFX_GAME_START);
 
             absolute_time_t round_start = get_absolute_time();
             int game_running = 1;
@@ -350,15 +350,12 @@ int main(void) {
                 if (wait_us > 0) sleep_us(wait_us);
             }
 
-            audio_stop_music();
             state = STATE_GAME_OVER;
             break;
         }
 
         /* ---------- GAME OVER ---------- */
         case STATE_GAME_OVER: {
-            audio_play_sfx(SFX_GAME_OVER);
-
             fillRect(100, 160, 440, 200, BLACK);
             setTextSize(3);
 
