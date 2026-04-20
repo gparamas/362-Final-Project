@@ -141,10 +141,18 @@ static int any_key_pressed(void) {
 }
 
 static void wait_for_keypress(void) {
+    int poll_count = 0;
     while (!any_key_pressed()) {
         usb_task();
+        poll_count++;
+        if (poll_count % 100 == 0) {
+            printf("[poll] usb_task called %d times, no key yet\n", poll_count);
+        }
         sleep_ms(10);
     }
+    printf("[key] pressed! P1: u=%d d=%d l=%d r=%d  P2: u=%d d=%d l=%d r=%d\n",
+           kb_p1.up, kb_p1.down, kb_p1.left, kb_p1.right,
+           kb_p2.up, kb_p2.down, kb_p2.left, kb_p2.right);
 }
 
 static void wait_for_release_then_press(void) {
@@ -264,6 +272,8 @@ int main(void) {
 
     printf("Using default map (SD loading disabled)\n");
     loadDefaultMap();
+
+    printf("[init] All modules initialized. Entering game loop.\n");
 
     /* --- game loop --- */
     GameState state = STATE_TITLE;
