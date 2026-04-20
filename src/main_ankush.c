@@ -5,7 +5,6 @@
 #include "hardware/pwm.h"
 #include "queue.h"
 #include "support.h"
-#include "dr_mp3.h"
 
 const char* username = "patward2";
 
@@ -91,33 +90,33 @@ void pwm_breathing() {
     pwm_set_gpio_level(gpio_num, (uint16_t)level);
 }
 
-void init_pwm_irq() {
-    // fill in
-    uint slice_num = pwm_gpio_to_slice_num(37);
-    pwm_clear_irq(slice_num);
-    pwm_set_irq0_enabled(slice_num, true);
-    irq_set_exclusive_handler(PWM_IRQ_WRAP_0, &pwm_breathing);
-    irq_set_enabled(PWM_IRQ_WRAP_0, true);
-    uint32_t current_period = (uint32_t)pwm_hw->slice[slice_num].top + 1;
-    duty_cycle = 100;
-    dir = 1;
+// void init_pwm_irq() {
+//     // fill in
+//     uint slice_num = pwm_gpio_to_slice_num(37);
+//     pwm_clear_irq(slice_num);
+//     pwm_set_irq0_enabled(slice_num, true);
+//     irq_set_exclusive_handler(PWM_IRQ_WRAP_0, &pwm_breathing);
+//     irq_set_enabled(PWM_IRQ_WRAP_0, true);
+//     uint32_t current_period = (uint32_t)pwm_hw->slice[slice_num].top + 1;
+//     duty_cycle = 100;
+//     dir = 1;
     
-    int i;
-    for(i=37; i<40; i++) {
-        uint slice_num = pwm_gpio_to_slice_num(i);
-        uint channel_num = pwm_gpio_to_channel(i);
-        uint32_t slice_period = (uint32_t)pwm_hw->slice[slice_num].top + 1;
-        uint32_t temp_curr_period = current_period;
-        if(temp_curr_period > slice_period) {
-            temp_curr_period = slice_period;
-        }
-        if(temp_curr_period > 0xFFFFu) {
-            temp_curr_period = 0xFFFFu;
-        }
-        pwm_set_chan_level(slice_num, channel_num, temp_curr_period);
-    }
+//     int i;
+//     for(i=37; i<40; i++) {
+//         uint slice_num = pwm_gpio_to_slice_num(i);
+//         uint channel_num = pwm_gpio_to_channel(i);
+//         uint32_t slice_period = (uint32_t)pwm_hw->slice[slice_num].top + 1;
+//         uint32_t temp_curr_period = current_period;
+//         if(temp_curr_period > slice_period) {
+//             temp_curr_period = slice_period;
+//         }
+//         if(temp_curr_period > 0xFFFFu) {
+//             temp_curr_period = 0xFFFFu;
+//         }
+//         pwm_set_chan_level(slice_num, channel_num, temp_curr_period);
+//     }
 
-}
+// }
 
 void pwm_audio_handler() {
     // fill in
@@ -140,23 +139,23 @@ void pwm_audio_handler() {
 
 }
 
-void init_pwm_audio() {
-    // fill in
-    gpio_set_function(36, GPIO_FUNC_PWM);
-    uint slice_num = pwm_gpio_to_slice_num(36);
-    uint channel_num = pwm_gpio_to_channel(36);
-    pwm_set_clkdiv_int_frac4(slice_num, 150, 0);
-    uint period = 1000000/RATE - 1;
-    pwm_set_wrap(slice_num, period);
-    pwm_set_chan_level(slice_num, channel_num, 0);
-    init_wavetable();
-    pwm_clear_irq(slice_num);
-    pwm_set_irq0_enabled(slice_num, true);
-    irq_set_exclusive_handler(PWM_IRQ_WRAP_0, &pwm_audio_handler);
-    irq_set_enabled(PWM_IRQ_WRAP_0, true);
-    pwm_set_enabled(slice_num, true);
+// void init_pwm_audio() {
+//     // fill in
+//     gpio_set_function(36, GPIO_FUNC_PWM);
+//     uint slice_num = pwm_gpio_to_slice_num(36);
+//     uint channel_num = pwm_gpio_to_channel(36);
+//     pwm_set_clkdiv_int_frac4(slice_num, 150, 0);
+//     uint period = 1000000/RATE - 1;
+//     pwm_set_wrap(slice_num, period);
+//     pwm_set_chan_level(slice_num, channel_num, 0);
+//     init_wavetable();
+//     pwm_clear_irq(slice_num);
+//     pwm_set_irq0_enabled(slice_num, true);
+//     irq_set_exclusive_handler(PWM_IRQ_WRAP_0, &pwm_audio_handler);
+//     irq_set_enabled(PWM_IRQ_WRAP_0, true);
+//     pwm_set_enabled(slice_num, true);
 
-}
+// }
 
 
 
@@ -168,13 +167,13 @@ int main()
 
     #ifdef AUDIO_MACHINE
         // audio_machine();
-        drum_machine_init();
-        play_kick();
-        sleep_ms(500);
-        play_snare();
-        sleep_ms(500);
-        play_hat();
-        sleep_ms(500);
+        audio_machine_init();
+        // play_kick();
+        // sleep_ms(500);
+        // play_snare();
+        // sleep_ms(500);
+        // play_hat();
+        // sleep_ms(500);
         play_sad_sample();
         sleep_ms(500);
     #endif
