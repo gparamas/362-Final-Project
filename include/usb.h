@@ -10,7 +10,4 @@ typedef struct {
 extern KeyboardState kb_p1;
 extern KeyboardState kb_p2;
 
-void usb_init(void);
-void usb_task(void);
-
 #endif

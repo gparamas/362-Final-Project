@@ -1,9 +1,13 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
 #include "pico/stdlib.h"
 #include "pico/time.h"
 #include "hardware/spi.h"
 #include "hardware/pio.h"
 #include "hardware/gpio.h"
 #include "hardware/dma.h"
+#include "tusb.h"
 #include "ff.h"
 #include "diskio.h"
 #include "sdcard.h"
@@ -11,8 +15,6 @@
 #include "ctf.h"
 #include "usb.h"
 #include "audio.h"
-#include <stdio.h>
-#include <string.h>
 
 /*=== SD card SPI pin config ===*/
 #define SD_MISO 16
@@ -143,10 +145,10 @@ static int any_key_pressed(void) {
 static void wait_for_keypress(void) {
     int poll_count = 0;
     while (!any_key_pressed()) {
-        usb_task();
+        tuh_task();
         poll_count++;
         if (poll_count % 100 == 0) {
-            printf("[poll] usb_task called %d times, no key yet\n", poll_count);
+            printf("[poll] tuh_task called %d times, no key yet\n", poll_count);
         }
         sleep_ms(10);
     }
@@ -157,7 +159,7 @@ static void wait_for_keypress(void) {
 
 static void wait_for_release_then_press(void) {
     /* wait for all keys released first */
-    while (any_key_pressed()) { usb_task(); sleep_ms(10); }
+    while (any_key_pressed()) { tuh_task(); sleep_ms(10); }
     wait_for_keypress();
 }
 
@@ -255,7 +257,8 @@ static void reset_after_capture(void) {
 
 int main(void) {
     stdio_init_all();
-    usb_init();
+    tusb_init();
+    printf("[usb] tusb_init done\n");
     initVGA();
     dma_channel_claim(0);
     dma_channel_claim(1);
@@ -309,7 +312,7 @@ int main(void) {
             while (game_running) {
                 absolute_time_t frame_start = get_absolute_time();
 
-                usb_task();
+                tuh_task();
 
                 /* --- move player 1 (WASD) --- */
                 if (kb_p1.up)    moveUp(player1, MOVE_SPEED);

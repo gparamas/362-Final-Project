@@ -1,7 +1,8 @@
-#include "usb.h"
-#include "tusb.h"
 #include <stdio.h>
-#include "pico/time.h"
+#include <stdbool.h>
+#include "pico/stdlib.h"
+#include "tusb.h"
+#include "usb.h"
 
 uint32_t tusb_time_millis_api(void) {
     return to_ms_since_boot(get_absolute_time());
@@ -9,15 +10,6 @@ uint32_t tusb_time_millis_api(void) {
 
 KeyboardState kb_p1 = {0};
 KeyboardState kb_p2 = {0};
-
-void usb_init(void) {
-    bool ok = tusb_init();
-    printf("[usb] tusb_init() = %s\n", ok ? "OK" : "FAILED");
-}
-
-void usb_task(void) {
-    tuh_task();
-}
 
 void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
                                 uint8_t const* report, uint16_t len) {
@@ -43,6 +35,17 @@ void tuh_hid_report_received_cb(uint8_t dev_addr, uint8_t instance,
         if (key == 0x50) kb_p2.left  = true;  // Left arrow
         if (key == 0x4F) kb_p2.right = true;  // Right arrow
     }
+
+    printf("P1: %s%s%s%s  |  P2: %s%s%s%s\n",
+        kb_p1.up    ? "W" : "-",
+        kb_p1.down  ? "S" : "-",
+        kb_p1.left  ? "A" : "-",
+        kb_p1.right ? "D" : "-",
+        kb_p2.up    ? "^" : "-",
+        kb_p2.down  ? "v" : "-",
+        kb_p2.left  ? "<" : "-",
+        kb_p2.right ? ">" : "-"
+    );
 
     tuh_hid_receive_report(dev_addr, instance);
 }
