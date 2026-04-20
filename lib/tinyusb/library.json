@@ -19,5 +19,19 @@
     "license": "MIT",
     "homepage": "https://www.tinyusb.org/",
     "frameworks": "*",
-    "platforms": "*"
+    "platforms": "*",
+    "build": {
+      "srcFilter": [
+        "+<src/tusb.c>",
+        "+<src/common/>",
+        "+<src/host/>",
+        "+<src/class/hid/>",
+        "+<src/portable/raspberrypi/rp2040/>"
+      ],
+      "includeDir": "src",
+      "flags": [
+        "-Isrc",
+        "-Ihw"
+      ]
+    }
 }

@@ -11,7 +11,8 @@ KeyboardState kb_p1 = {0};
 KeyboardState kb_p2 = {0};
 
 void usb_init(void) {
-    tusb_init();
+    bool ok = tusb_init();
+    printf("[usb] tusb_init() = %s\n", ok ? "OK" : "FAILED");
 }
 
 void usb_task(void) {
