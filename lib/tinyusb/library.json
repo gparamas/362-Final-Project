@@ -22,11 +22,11 @@
     "platforms": "*",
     "build": {
       "srcFilter": [
-        "+<src/tusb.c>",
-        "+<src/common/>",
-        "+<src/host/>",
-        "+<src/class/hid/>",
-        "+<src/portable/raspberrypi/rp2040/>"
+        "+<tusb.c>",
+        "+<common/>",
+        "+<host/>",
+        "+<class/hid/>",
+        "+<portable/raspberrypi/rp2040/>"
       ],
       "includeDir": "src",
       "flags": [
