@@ -248,6 +248,8 @@ static void reset_after_capture(void) {
 int main(void) {
     stdio_init_all();
     initVGA();
+    dma_channel_claim(0);
+    dma_channel_claim(1);
     init_uart();
     init_uart_irq();
     init_sdcard_io();
