@@ -128,7 +128,7 @@ static void trigger_voice(int idx)
     v->pos    = 0;
     // Write pos=0 and frames before setting active so the ISR
     // never sees active=true with a stale pos.
-    __dmb();
+    //__dmb();
     v->active = true;
 }
  

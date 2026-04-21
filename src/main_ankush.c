@@ -174,8 +174,11 @@ int main()
         // sleep_ms(500);
         // play_hat();
         // sleep_ms(500);
+        for(;;) {
         play_sad_sample();
-        sleep_ms(500);
+        
+        sleep_ms(5000);
+        }
     #endif
 
     while (true) {
