@@ -18,9 +18,9 @@
 
 #include "audio_machine.h"
 
-#include "kick_pcm.h"
+#include "fah_sample_pcm.h"
 #include "snare_pcm.h"
-#include "hat_pcm.h"
+#include "cucaracha_sample_pcm.h"
 #include "sad_sample_pcm.h"
 
 // We deliberately don't pull in support.h here. support.h has a tentative
@@ -40,10 +40,10 @@ typedef struct {
 static voice_t voices[NUM_VOICES];
 
 static const int16_t * const flash_pcm[NUM_VOICES] = {
-    kick_pcm, snare_pcm, hat_pcm, sad_sample_pcm
+    fah_sample_pcm, snare_pcm, cucaracha_sample_pcm, sad_sample_pcm
 };
 static const uint32_t flash_frames[NUM_VOICES] = {
-    kick_pcm_len, snare_pcm_len, hat_pcm_len, sad_sample_pcm_len
+    fah_sample_pcm_len, snare_pcm_len, cucaracha_sample_pcm_len, sad_sample_pcm_len
 };
 
 static uint     pwm_slice;
@@ -111,11 +111,11 @@ static void trigger_voice(int idx) {
     v->pos    = 0;
     // Make sure pos=0 and frames are visible before active=true, or the ISR
     // could see a stale position.
-    __asm volatile("dmb" ::: "memory");
+    // __asm volatile("dmb" ::: "memory");
     v->active = true;
 }
 
-void play_kick(void)       { trigger_voice(0); }
+void play_fah_sample(void) { trigger_voice(0); }
 void play_snare(void)      { trigger_voice(1); }
-void play_hat(void)        { trigger_voice(2); }
+void play_cucaracha_sample(void) { trigger_voice(2); }
 void play_sad_sample(void) { trigger_voice(3); }
