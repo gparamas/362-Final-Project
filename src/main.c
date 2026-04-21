@@ -28,13 +28,13 @@
 
 // initCTF() spawns players/flags at these positions (see ctf.c).
 // Re-declared here so the tag/reset helper can send them home.
-#define P1_SPAWN_X    50
+#define P1_SPAWN_X    90
 #define P1_SPAWN_Y    240
 #define P2_SPAWN_X    500
 #define P2_SPAWN_Y    240
-#define FLAG1_SPAWN_X 50
-#define FLAG1_SPAWN_Y 50
-#define FLAG2_SPAWN_X 200
+#define FLAG1_SPAWN_X 30
+#define FLAG1_SPAWN_Y 240
+#define FLAG2_SPAWN_X 590
 #define FLAG2_SPAWN_Y 240
 
 
@@ -97,6 +97,8 @@ static void return_flag_to_spawn(Flag* f, short sx, short sy) {
 }
 
 static void tag_player(Player* victim) {
+    if(playerInEnemyEndZone(victim))
+        return;
     if (victim->hasFlag) {
         victim->hasFlag = 0;
         if (victim == player1) return_flag_to_spawn(flag2, FLAG2_SPAWN_X, FLAG2_SPAWN_Y);
@@ -142,17 +144,19 @@ int main(void) {
         KeyboardState p1 = kb_p1;
         KeyboardState p2 = kb_p2;
 
+        int touched = 0;
+
         // Player 1 (WASD)
-        if (p1.up)    moveUp   (player1, PLAYER_SPEED);
-        if (p1.down)  moveDown (player1, PLAYER_SPEED);
-        if (p1.left)  moveLeft (player1, PLAYER_SPEED);
-        if (p1.right) moveRight(player1, PLAYER_SPEED);
+        if (p1.up)    touched = moveUp   (player1, PLAYER_SPEED);
+        if (p1.down) touched =  moveDown (player1, PLAYER_SPEED);
+        if (p1.left)  touched = moveLeft (player1, PLAYER_SPEED);
+        if (p1.right) touched = moveRight(player1, PLAYER_SPEED);
 
         // Player 2 (arrows)
-        if (p2.up)    moveUp   (player2, PLAYER_SPEED);
-        if (p2.down)  moveDown (player2, PLAYER_SPEED);
-        if (p2.left)  moveLeft (player2, PLAYER_SPEED);
-        if (p2.right) moveRight(player2, PLAYER_SPEED);
+        if (p2.up)    touched = moveUp   (player2, PLAYER_SPEED);
+        if (p2.down)  touched = moveDown (player2, PLAYER_SPEED);
+        if (p2.left)  touched = moveLeft (player2, PLAYER_SPEED);
+        if (p2.right) touched = moveRight(player2, PLAYER_SPEED);
 
         // Flag pickup: grab the opposing color flag on contact.
         // Using play_kick because hat_pcm has ~30ms of silence at the start
@@ -170,7 +174,7 @@ int main(void) {
         // enemy territory is the intruder and gets sent home. If both are
         // still on their own side (edges touching at the midline), nothing
         // happens - they just block each other.
-        if (touchingPlayer(player1, player2)) {
+        if (touched == 1) {
             short p1_mid = player1->x + player1->size / 2;
             short p2_mid = player2->x + player2->size / 2;
 

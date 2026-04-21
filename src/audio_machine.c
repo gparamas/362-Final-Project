@@ -111,7 +111,7 @@ static void trigger_voice(int idx) {
     v->pos    = 0;
     // Make sure pos=0 and frames are visible before active=true, or the ISR
     // could see a stale position.
-    __asm volatile("dmb" ::: "memory");
+    //__asm volatile("dmb" ::: "memory");
     v->active = true;
 }
 

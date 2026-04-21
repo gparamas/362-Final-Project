@@ -20,6 +20,7 @@ typedef struct {
     char color;
     int hasFlag;
     Flag* flag;
+    char replaced[900];
 } Player;
 //There are two global player instances, player1 and player2. You need to use these. call initCTF() at the beginning to initialize them
 
@@ -48,7 +49,7 @@ void moveTo(Player* player, short x, short y); //moves player to location x, y (
 int touchingPlayer(Player* p1, Player* p2); //developer function, dont use this. use values you get from move commands
 void hasFlag(Player* p1, int hasFlag); //if player picks up his flag, call this with hasflag = 1. If he loses flag, call with hasflag = 0.
 int playerInEndZone(Player* p); //retuns if player is in end zone -- left side for player1, right side for player2
-
+int playerInEnemyEndZone(Player* p);
 
 void readFlag(); // dev function
 Flag* initFlag(short x, short y, char color); // dev function

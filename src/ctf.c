@@ -20,6 +20,13 @@ int count1 = 0;
 int count2 = 0;
 
 
+static int touchingFlagCollision(Flag* f1, short x, short y) {
+    return (x <= f1->x + 12) &&
+    (x + 50 >= f1->x) &&
+    (y <= f1->y + 30) &&
+    (y + 50 >= f1->y);
+}
+
 void initCTF() {
     for(int i = 0; i < 480; i++) {
         memset(&vga_data_array[320*i], (char)(RED << 3 | RED), 35 * sizeof(char));
@@ -27,11 +34,11 @@ void initCTF() {
         memset(&vga_data_array[320*i+285], (char)(RED << 3 | RED), 35 * sizeof(char));
     }
     readFlag();
-    flag1 = initFlag(50, 50, BLUE);
+    flag1 = initFlag(30, 240, BLUE);
     flag1->state = ALONE;
-    flag2 = initFlag(200, 240, GREEN);
+    flag2 = initFlag(590, 240, GREEN);
     flag2->state = ALONE;
-    player1 = initPlayer(50, 240, 50, BLUE);
+    player1 = initPlayer(90, 240, 50, BLUE);
     player1->flag = flag2;
     player2 = initPlayer(500, 240, 50, GREEN);
     player2->flag = flag1;
@@ -60,11 +67,15 @@ int moveRight(Player* player, short dist) {
         if(touchingPlayer(&test, player2)) {
             return 1;
         }
+        if(touchingFlagCollision(flag1, newX, player->y))
+            return 2;
     }
     else {
         if(touchingPlayer(&test, player1)) {
             return 1;
         }
+        if(touchingFlagCollision(flag2, newX, player->y))
+            return 2;
     }
 
     if(player->hasFlag) {
@@ -72,8 +83,8 @@ int moveRight(Player* player, short dist) {
     }
     
     for(int x = player->x; x < newX; x++) {
-        for(int y = player->y; y < player->y+player->size; y++) {
-            drawPixel(x, y, WHITE);
+        for(int y = player->y; y < player->y+player->size + 1; y++) {
+            drawPixel(x, y, (x >= 570 || x <= 70) ? RED : WHITE);
         }
     }
     for(int x = player->x + player->size; x < player->x + player->size + dist; x++) {
@@ -96,11 +107,15 @@ int moveLeft(Player* player, short dist) {
         if(touchingPlayer(&test, player2)) {
             return 1;
         }
+        if(touchingFlagCollision(flag1, newX, player->y))
+            return 2;
     }
     else {
         if(touchingPlayer(&test, player1)) {
             return 1;
         }
+        if(touchingFlagCollision(flag2, newX, player->y))
+            return 2;
     }
 
     if(player->hasFlag) {
@@ -114,7 +129,7 @@ int moveLeft(Player* player, short dist) {
     }
     for(int x = player->x + player->size + dist; x > player->x + player->size - dist; x--) {
         for(int y = player->y; y < player->y+player->size + 1; y++) {
-            drawPixel(x, y, WHITE);
+            drawPixel(x, y, (x >= 570 || x <= 70) ? RED : WHITE);
         }
     }
     player->x = newX;
@@ -129,11 +144,15 @@ int moveUp(Player* player, short dist) {
         if(touchingPlayer(&test, player2)) {
             return 1;
         }
+        if(touchingFlagCollision(flag1, player->x, newY))
+            return 2;
     }
     else {
         if(touchingPlayer(&test, player1)) {
             return 1;
         }
+        if(touchingFlagCollision(flag2, player->x, newY))
+            return 2;
     }
 
     if(player->hasFlag) {
@@ -145,9 +164,9 @@ int moveUp(Player* player, short dist) {
             drawPixel(x, y, player->color);
         }
     }
-    for(int x = player->x; x < player->x + player->size; x++) {
+    for(int x = player->x - 1; x < player->x + player->size + 1; x++) {
         for(int y = player->y + player->size; y > newY + player->size; y--) {
-            drawPixel(x, y, WHITE);
+            drawPixel(x, y, (x >= 570 || x <= 70) ? RED : WHITE);
         }
     }
     player->y = newY;
@@ -162,10 +181,16 @@ int moveDown(Player* player, short dist) {
         if(touchingPlayer(&test, player2)) {
             return 1; 
         }
+        if(touchingFlagCollision(flag1, player->x, newY)) {
+            return 2;
+        }
     }
     else {
         if(touchingPlayer(&test, player1)) {
             return 1;
+        }
+        if(touchingFlagCollision(flag2, player->x, newY)) {
+            return 2;
         }
     }
 
@@ -180,7 +205,7 @@ int moveDown(Player* player, short dist) {
     }
     for(int x = player->x; x < player->x + player->size + 1; x++) {
         for(int y = player->y; y < newY; y++) {
-            drawPixel(x, y, WHITE);
+            drawPixel(x, y, (x >= 570 || x <= 70) ? RED : WHITE);
         }
     }
     player->y = newY;
@@ -188,8 +213,8 @@ int moveDown(Player* player, short dist) {
 }
 
 void moveTo(Player* player, short x, short y) {
-    for(int i = player->x; i < player->x + player->size; i++) {
-        for(int j = player->y; j < player->y + player->size; j++) {
+    for(int i = player->x-1; i < player->x + player->size+1; i++) {
+        for(int j = player->y-1; j < player->y + player->size+1; j++) {
             drawPixel(i, j, WHITE);
         }
     }
@@ -238,7 +263,7 @@ void moveFlagTo(Flag* flag, short x, short y) {
                 drawPixel(j, i, player2->color);
             }
             else {
-                drawPixel(j, i, WHITE);
+                drawPixel(j, i, (j <= 70 || j >= 570) ? RED : WHITE);
             }
         }
     }
@@ -263,6 +288,8 @@ int touchingPlayer(Player* p1, Player* p2) {
     (p1->y + p1->size >= p2->y);
 }
 
+
+
 int touchingFlag(Player* p1, Flag* f1) {
     return (p1->x <= f1->x + 30) &&
     (p1->x + p1->size >= f1->x) &&
@@ -272,7 +299,7 @@ int touchingFlag(Player* p1, Flag* f1) {
 
 int playerInEndZone(Player* p) {
     if (p == player1) {
-        if(p->x < 100) {
+        if(p->x < 50) {
             return 1;
         }
         return 0;
@@ -285,6 +312,24 @@ int playerInEndZone(Player* p) {
     }
     return -1;
 }
+
+
+int playerInEnemyEndZone(Player* p) {
+    if (p == player2) {
+        if(p->x < 70) {
+            return 1;
+        }
+        return 0;
+    }
+    if (p == player1) {
+        if(p->x > 515) {
+            return 1;
+        }
+        return 0;
+    }
+    return -1;
+}
+
 
 void hasFlag(Player* p1, int hasFlag) {
     p1->hasFlag = hasFlag;
