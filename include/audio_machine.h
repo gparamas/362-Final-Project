@@ -7,9 +7,9 @@
 
 void audio_machine_init(void);
 
-void play_kick(void);
+void play_fah_sample(void);
 void play_snare(void);
-void play_hat(void);
+void play_cucaracha_sample(void);
 void play_sad_sample(void);
 
 #endif

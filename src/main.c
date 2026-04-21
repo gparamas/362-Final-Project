@@ -106,7 +106,7 @@ static void tag_player(Player* victim) {
     }
     if (victim == player1) moveTo(victim, P1_SPAWN_X, P1_SPAWN_Y);
     else                   moveTo(victim, P2_SPAWN_X, P2_SPAWN_Y);
-    play_snare();  // tagged!
+    play_sad_sample();  // tagged!
 }
 
 int main(void) {
@@ -131,7 +131,7 @@ int main(void) {
     audio_machine_init();
     printf("[main] audio ready\n");
 
-    play_kick();  // boot chime / game-start
+    //play_kick();  // boot chime / game-start
 
     absolute_time_t next_frame = make_timeout_time_ms(FRAME_MS);
 
@@ -163,11 +163,11 @@ int main(void) {
         // and is mostly high-frequency content; kick is loud and obvious.
         if (!player1->hasFlag && touchingFlag(player1, flag2)) {
             hasFlag(player1, 1);
-            play_kick();
+            play_fah_sample();
         }
         if (!player2->hasFlag && touchingFlag(player2, flag1)) {
             hasFlag(player2, 1);
-            play_kick();
+            play_fah_sample();
         }
 
         // Tagging: on contact, whichever player's center has crossed into
@@ -187,10 +187,10 @@ int main(void) {
 
         // Win condition: bring the enemy flag back to your own end zone.
         if (player1->hasFlag && playerInEndZone(player1)) {
-            play_sad_sample();
+            play_cucaracha_sample();
             showEnd(player1);   // blocks forever - game over
         } else if (player2->hasFlag && playerInEndZone(player2)) {
-            play_sad_sample();
+            play_cucaracha_sample();
             showEnd(player2);
         }
     }
