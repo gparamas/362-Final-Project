@@ -3,9 +3,8 @@
 // Combines:
 //   - Gautham's VGA driver + CTF game logic (vga_graphics, ctf)
 //   - Ammar's TinyUSB host keyboard handler (usb)
-//
-// Audio and SD-card map loading are intentionally left out for this build
-// so we can validate the USB + VGA integration end-to-end first.
+//   - Ankush's single-core PWM audio engine (audio_machine)
+//   - SD-card SPI helpers for flag sprite / map loading
 
 #include <stdio.h>
 #include <stdbool.h>
@@ -25,6 +24,7 @@
 
 #define PLAYER_SPEED  3
 #define FRAME_MS      25    // ~40 FPS game update
+#define MIDLINE_X     320   // anything left of this is player 1's half
 
 // initCTF() spawns players/flags at these positions (see ctf.c).
 // Re-declared here so the tag/reset helper can send them home.
@@ -155,20 +155,30 @@ int main(void) {
         if (p2.right) moveRight(player2, PLAYER_SPEED);
 
         // Flag pickup: grab the opposing color flag on contact.
+        // Using play_kick because hat_pcm has ~30ms of silence at the start
+        // and is mostly high-frequency content; kick is loud and obvious.
         if (!player1->hasFlag && touchingFlag(player1, flag2)) {
             hasFlag(player1, 1);
-            play_hat();
+            play_kick();
         }
         if (!player2->hasFlag && touchingFlag(player2, flag1)) {
             hasFlag(player2, 1);
-            play_hat();
+            play_kick();
         }
 
-        // Tagging: if two players collide and one is on their own side,
-        // the home-side player tags the intruder.
+        // Tagging: on contact, whichever player's center has crossed into
+        // enemy territory is the intruder and gets sent home. If both are
+        // still on their own side (edges touching at the midline), nothing
+        // happens - they just block each other.
         if (touchingPlayer(player1, player2)) {
-            if      (playerInEndZone(player1)) tag_player(player2);
-            else if (playerInEndZone(player2)) tag_player(player1);
+            short p1_mid = player1->x + player1->size / 2;
+            short p2_mid = player2->x + player2->size / 2;
+
+            if (p2_mid < MIDLINE_X) {
+                tag_player(player2);        // player 2 in player 1's half
+            } else if (p1_mid >= MIDLINE_X) {
+                tag_player(player1);        // player 1 in player 2's half
+            }
         }
 
         // Win condition: bring the enemy flag back to your own end zone.
